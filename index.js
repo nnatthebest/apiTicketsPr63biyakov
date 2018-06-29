@@ -10,7 +10,9 @@ function marketsDirector() {
     
         let exmo = new marketExmo();
         exmo.builderTickers();
-
+	
+	let WEX = new marketWEX();
+	WEX.builderTickers();
     });
 }
 
@@ -51,3 +53,46 @@ class marketPolonex extends Tickers {
     }
 }
 
+class marketWEX extends Tickers {
+    constructor() { 
+        let apiTicker = 'https://wex.nz/api/3/ticker/btc_usd';
+        let tickerBuy = 'buy';
+        let tickerSell = 'sell';
+        let marketName = 'WEX';
+
+        super(apiTicker, tickerBuy, tickerSell, marketName);
+
+        this.urlInfo = 'https://wex.nz/api/3/info';        
+    }    
+    
+    builderTickers() {
+        this.getDataFromApi(this.urlInfo)
+
+            .then( data => {
+                this.formUrlApiTicker(data);
+                this.getDataFromApi(this.apiTicker)
+
+                    .then( data => {
+                        let tickers = this.getTickersValue(data);
+                        this.writeToDatabase(tickers);
+                    });
+            });   
+    }
+
+    formUrlApiTicker(data){
+        let joinedTickers = this.joinGetTickers( this.getListKeyApiInfo(data) );
+        this.apiTicker = this.addTickersTailToUrl(this.apiTicker, joinedTickers);
+    }
+
+    getListKeyApiInfo(data) {
+        return Object.keys(data.pairs);
+    }
+
+    joinGetTickers(keys) {
+        return keys.join('-');
+    }
+
+    addTickersTailToUrl(urlApi, tail){
+        return urlApi = urlApi + tail +'?ignore_invalid=1';
+    }
+}
